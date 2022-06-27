@@ -1,0 +1,48 @@
+# Model,定义网络结构,这里使用LeNet模型 
+# input->卷积1层->激活函数->池化1层->卷积2层->激活函数->池化2层->几个full connection层->output
+class Model(torch.nn.Module):
+
+    # 看别人的一般都是在init中初始化某些变量到self中（比如self.fun = ...），然后在前向传播过程中，直接通过self.fun去调用函数。
+    # 比如：CONV2D函数表示二维卷积，返回值为一个函数，所以就可以self.conv1=nn.Conv2d(参数...);然后在forward中使用self.conv1.
+    def __init__(self):
+        super(Model, self).__init__()
+        """
+        torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True, padding_mode='zeros', device=None, dtype=None)
+            - in_channels：输入channel数
+            - out_channels：输出channel数
+            - kernel_size：卷积核的大小，一般使用3比较多，配合上stride=1和padding=1可以保证卷积前后尺寸不变
+        
+        torch.nn.Linear(in_features, out_features, bias=True, device=None, dtype=None)
+            - in_features：输入特征维度
+            - out_features：输出特征维度
+        """
+        # 定义网络层用到的layer层函数     
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)  # 这里也可以用平均池化nn.AvgPool2d   
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+        
+   
+    # 前向传播过程,最后返回的是最终输出的预测label
+    # 额。。。
+    '''
+    输入：
+        self:可以看作java里面的this，可以调用定义的net结构
+        x:表示输入的特征，tensor类型，这里tensor是tensor<batch_size,channel,height,weight>的4维。
+    
+    输出：
+        output：输出值，本案例不是one-hot类型，而是scalar类型，但是由于每次训练的都是一个batch，所以输出也是tensor(tensor<batch_size>)，一维的tensor类型
+    '''
+    def forward(self, x):
+        # print(self)# self 是啥？他自己。类似于java中的this   
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+#         print(x.shape) # <==输出一下看下面的view的参数是啥)
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+#         print(x.shape)# 最终输出的是啥形状torch.Size([64,10])，可以
+        return x
